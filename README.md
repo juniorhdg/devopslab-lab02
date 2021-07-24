@@ -1,2 +1,2 @@
-# devopslab-lab02
-Repo do Lab Cloud&amp;DevOps - Sábados
+### DEVOPS LAB - LAB0
+Aplicação Simples em  Python/Flask com teste usando Unittest integrado ao Travis-CI fazendo deploy no Heroku.
