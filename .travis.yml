@@ -5,32 +5,54 @@ language: python
 python:
   - "3.7.9"
 
-# Instalação de Módulos que são necessários para a Aplicação.
-install:
-  - pip install flask
-
-# Defini o script de Teste que deve rodar toda vez que o código for alterado.
-script:
-  - python -m unittest -v test  
-
+os: linux
+dist: xenial
 
 before_install:
 - openssl aes-256-cbc -K $encrypted_5b4e824f94e1_key -iv $encrypted_5b4e824f94e1_iv
   -in labdevopscloud-juniorhdg-934a82ac20cf.json.enc -out ../labdevopscloud-juniorhdg-934a82ac20cf.json
   -d
 
-  
-    # Definir o Deploy no Heroku
-deploy:
-  - provider: heroku
-    api_key: $HEROKU_API_KEY
-    edge: true
-    app: devopslab-antoniojr
-    on:
-      branch: main
+jobs:
+  include:
+    - stage: Build
 
-  - provider: gae
-    keyfile: ../labdevopscloud-juniorhdg-934a82ac20cf.json
-    project: labdevopscloud-juniorhdg
-    on:
-      branch: main
+      name: "Testes Unitarios"
+      # Instalação de Módulos que são necessários para a Aplicação.
+      install:
+        - pip install flask flask-wtf coverage
+      script:  # Defini o script de Teste que deve rodar toda vez que o código for alterado.
+        - coverage run test.py || travis_terminate 1;
+        - coverage report app.py || travis_terminate 1;
+        - coverage xml app.py || travis_terminate 1;
+
+    - stage: STG Deploy
+      script: skip
+      # Definir o Deploy no Heroku
+      deploy:
+        provider: heroku
+        strategy: api
+        api_key: $HEROKU_API_KEY
+        edge: true
+        app: devopslab-juniorhdg
+        on:
+          branch: main
+
+    - stage: STG TEST
+      script:
+        - curl https://devopslab-juniorhdg.herokuapp.com/ | grep Hello || travis_terminate 1;
+
+    - stage: PROD Deploy
+      script: skip
+      # Definir o Deploy no Google Cloud
+      deploy:
+        provider: gae
+        keyfile: ../labdevopscloud-juniorhdg-934a82ac20cf.json
+        project: labdevopscloud-juniorhdg
+        on:
+          branch: main
+
+    - stage: PROD TEST
+      script:
+        - curl https://labdevopscloud-juniorhdg.uc.r.appspot.com/ | grep Hello || travis_terminate 1;
+          
